@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Optimización de Rutas - Líneas 74 y 75</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.24.1/plotly.min.js"></script>
-    <script src="routes.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
     <link rel="stylesheet" href="routes.css">
 </head>
 <body>
@@ -22,8 +23,8 @@
 
         <div class="controls">
             <div class="control-group">
-                <button class="btn" onclick="generateOptimization()">Generar Optimización</button>
-                <button class="btn" onclick="exportResults()">Exportar Resultados</button>
+                <button class="btn" onclick="generateOptimization()">🔄 Generar Optimización</button>
+                <button class="btn" onclick="exportResults()">📊 Exportar Resultados</button>
             </div>
         </div>
 
@@ -44,60 +45,56 @@
                 <h3>👥 Pasajeros Acumulados - Línea 75</h3>
                 <div id="passengerVector75" class="chart-container"></div>
             </div>
+            <div class="dashboard-item">
+                <h3>⏱️ Tiempos Entre Paradas - Línea 74</h3>
+                <div id="tiemposEntre74" class="chart-container"></div>
+            </div>
+            <div class="dashboard-item">
+                <h3>⏱️ Tiempos Entre Paradas - Línea 75</h3>
+                <div id="tiemposEntre75" class="chart-container"></div>
+            </div>
+            <div class="dashboard-item">
+                <h3>📈 Tiempo Ponderado - Línea 74</h3>
+                <div id="weightedTime74" class="chart-container"></div>
+            </div>
+            <div class="dashboard-item">
+                <h3>📈 Tiempo Ponderado - Línea 75</h3>
+                <div id="weightedTime75" class="chart-container"></div>
+            </div>
+            <div class="dashboard-item">
+                <h3>💰 Matriz A' - Línea 74</h3>
+                <div id="aPrime74" class="chart-container"></div>
+            </div>
+            <div class="dashboard-item">
+                <h3>💰 Matriz A' - Línea 75</h3>
+                <div id="aPrime75" class="chart-container"></div>
+            </div>
+            <div class="dashboard-item">
+                <h3>💲 Costos por Tramo - Línea 74</h3>
+                <div id="costVector74" class="chart-container"></div>
+            </div>
+            <div class="dashboard-item">
+                <h3>💲 Costos por Tramo - Línea 75</h3>
+                <div id="costVector75" class="chart-container"></div>
+            </div>
             <div class="dashboard-item full-width">
                 <h3>🗺️ Rutas Optimizadas</h3>
                 <div id="routeVisualization" class="chart-container"></div>
             </div>
+            <div class="dashboard-item full-width">
+                <h3>📊 Frecuencias Óptimas</h3>
+                <div id="frequenciesBar" class="chart-container"></div>
+            </div>
         </div>
 
         <div class="results-container">
-            <h3>Resultados de Optimización</h3>
+            <h3>🎯 Resultados de Optimización</h3>
             <div class="optimization-results" id="optimizationResults">
                 <!-- Resultados generados dinámicamente -->
             </div>
         </div>
     </div>
 
-    <script>
-        // Función para exportar resultados como CSV
-        function exportResults() {
-            const results = window.currentData; // Acceder a resultados desde optimization.js
-            if (!results) {
-                alert("No hay resultados para exportar. Genera la optimización primero.");
-                return;
-            }
-
-            const csvRows = [
-                ["Línea", "Parada", "Nombre", "Tiempo Acum (min)", "Distancia (km)", "Pasajeros (pax/h)"],
-                ...Object.entries(results).filter(([key]) => ['74', '75'].includes(key)).flatMap(([lineId, data]) =>
-                    data.stopsNames.map((name, i) => [
-                        lineId,
-                        i + 1,
-                        name,
-                        data.tiemposAcum[i],
-                        data.distancias[i],
-                        data.passengerVector[i]
-                    ])
-                ),
-                [],
-                ["Frecuencias Óptimas"],
-                ["Línea 74", `${results.frequencies.f74.toFixed(2)} micros/h (~${(60 / results.frequencies.f74).toFixed(0)} min)`],
-                ["Línea 75", `${results.frequencies.f75.toFixed(2)} micros/h (~${(60 / results.frequencies.f75).toFixed(0)} min)`],
-                ["Costo Total", `${results.frequencies.costoTotal.toFixed(2)} Bs/h`],
-                [],
-                ["Intersecciones"],
-                ...results.intersections.map(i => [i.name, i.stops.join(", ")])
-            ];
-
-            const csvContent = csvRows.map(row => row.join(",")).join("\n");
-            const blob = new Blob([csvContent], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'optimization_results.csv';
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-    </script>
+    <script src="routes.js"></script>
 </body>
 </html>

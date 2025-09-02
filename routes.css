@@ -20,7 +20,6 @@
                     color: white;
                     margin-bottom: 30px;
                     padding: 20px;
-                    background: rgba(255, 255, 255, 0.2);
                     border-radius: 4px;
                     backdrop-filter: blur(10px);
                     animation: fadeInDown 0.8s ease-out;
@@ -175,7 +174,7 @@
 
         .optimization-results {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(2, 1fr);
             gap: 20px;
             margin-top: 20px;
         }
