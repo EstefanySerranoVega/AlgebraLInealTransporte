@@ -38,7 +38,7 @@ class TransportOptimizer {
             }
         };
         this.lines = data || this.defaultLines;
-        this.capacity = 35;
+        this.capacity = 38;
         this.fuelCost = 3.74;
         this.maintenanceCost = 20;
     }
@@ -136,22 +136,26 @@ class TransportOptimizer {
         const passengerVector = this.generatePassengerVector(lineId);
         return aPrime.reduce((sum, val, i) => sum + val * passengerVector[i], 0);
     }
-
     optimizeFrequencies() {
         const costo74 = (this.lines[74].distancias[7] * 0.4 * this.fuelCost + (this.lines[74].tiemposAcum[7] / 60) * this.maintenanceCost);
         const costo75 = (this.lines[75].distancias[7] * 0.4 * this.fuelCost + (this.lines[75].tiemposAcum[7] / 60) * this.maintenanceCost);
-        const maxPasajeros74 = Math.max(...this.lines[74].pasajeros);
-        const maxPasajeros75 = Math.max(...this.lines[75].pasajeros);
+        const minFrequency = 8; // 7.5 min
+        const maxPasajeros74 = Math.max(...this.lines[74].pasajeros) * 2; // Ajuste por pico
+        const maxPasajeros75 = Math.max(...this.lines[75].pasajeros) * 2; // Ajuste por pico
         const A = [[1, 0], [0, 1]];
-        const b = [Math.max(4, maxPasajeros74 / this.capacity), Math.max(4, maxPasajeros75 / this.capacity)];
+        const b = [Math.max(minFrequency, maxPasajeros74 / this.capacity), Math.max(minFrequency, maxPasajeros75 / this.capacity)];
+        const ingresos74 = (maxPasajeros74 * 0.7 * 1 + maxPasajeros74 * 0.3 * 2.5); 
+        const ingresos75 = (maxPasajeros75 * 0.7 * 1 + maxPasajeros75 * 0.3 * 2.5);
         return {
             f74: b[0],
             f75: b[1],
             costoTotal: costo74 * b[0] + costo75 * b[1],
-            costoActual: costo74 * 5 + costo75 * 5
+            costoActual: costo74 * 4 + costo75 * 4,
+            ingresosTotales: ingresos74 + ingresos75,
+            beneficio: (ingresos74 + ingresos75) - (costo74 * b[0] + costo75 * b[1])
         };
     }
-    
+
     generateCoords(lineId) {
         const distancias = this.lines[lineId].distancias;
         return distancias.map((dist, i) => ({ x: dist, y: lineId === '74' ? 0 : 1 }));
@@ -199,7 +203,6 @@ class TransportOptimizer {
     }
 }
 
-// Función principal para generar optimización
 async function generateOptimization() {
     try {
         document.getElementById('loading').style.display = 'block';
@@ -208,7 +211,6 @@ async function generateOptimization() {
         const optimizer = new TransportOptimizer(window.customData || null);
         const results = optimizer.optimizeRoutes();
 
-        // Verificar existencia de contenedores antes de renderizar
         const requiredIds = [
             'timeMatrix74', 'timeMatrix75', 'passengerVector74', 'passengerVector75',
             'weightedTime74', 'weightedTime75', 'aPrime74', 'aPrime75',
@@ -245,7 +247,6 @@ async function generateOptimization() {
     }
 }
 
-// Carga dinámica de datos desde CSV
 function loadCSVData(event) {
     const file = event.target.files[0];
     if (!file) {
@@ -277,7 +278,6 @@ function loadCSVData(event) {
     });
 }
 
-// Visualización de matriz de tiempos
 function createTimeMatrix(matrix, stops, lineId) {
     const trace = {
         z: matrix,
@@ -303,7 +303,6 @@ function createTimeMatrix(matrix, stops, lineId) {
     Plotly.newPlot(`timeMatrix${lineId}`, [trace], layout, { responsive: true, displayModeBar: false });
 }
 
-// Visualización de vector de pasajeros
 function createPassengerVector(vector, stops, lineId) {
     const trace = {
         x: stops.map((_, i) => `P${i + 1}`),
@@ -324,7 +323,6 @@ function createPassengerVector(vector, stops, lineId) {
     Plotly.newPlot(`passengerVector${lineId}`, [trace], layout, { responsive: true, displayModeBar: false });
 }
 
-// Visualización de tiempo ponderado
 function createWeightedTimeVisualization(vector, stops, lineId) {
     const trace = {
         x: stops.map((_, i) => `P${i + 1}`),
@@ -406,23 +404,20 @@ function createTiemposEntreVisualization(vector, stops, lineId) {
     Plotly.newPlot(`tiemposEntre${lineId}`, [trace], layout, { responsive: true, displayModeBar: false });
 }
 
-// Visualización para frecuencias óptimas
 function createFrequenciesBar(frequencies) {
     const trace = {
         x: ['Línea 74', 'Línea 75'],
         y: [frequencies.f74, frequencies.f75],
         type: 'bar',
         marker: { color: ['#FF6B6B', '#4ECDC4'] },
-        hovertemplate: '<b>%{x}</b><br>Frecuencia: %{y:.2f} micros/h<extra></extra>'
+        hovertemplate: '<b>%{x}</b><br>Frecuencia: %{y:.2f} micros/h (~%{value|60/value:.0f} min)<extra></extra>'
     };
-
     const layout = {
         title: { text: 'Frecuencias Óptimas', font: { size: 16 } },
         xaxis: { title: 'Línea' },
         yaxis: { title: 'Micros por Hora' },
         margin: { l: 60, r: 30, t: 60, b: 50 }
     };
-
     Plotly.newPlot('frequenciesBar', [trace], layout, { responsive: true, displayModeBar: false });
 }
 
